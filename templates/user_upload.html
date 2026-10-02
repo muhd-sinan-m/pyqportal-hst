@@ -2122,14 +2122,13 @@
 
         function setUploadAndCameraBlocked(blocked) {
             const dz = document.getElementById('dropzone');
-            const fInput = document.getElementById('fileInput');
             const scanBtn = document.getElementById('openScannerBtn');
-            const camInput = document.getElementById('cameraInput');
-            const galInput = document.getElementById('galleryInput');
+            const chooseGalBtn = document.getElementById('chooseGalleryBtn');
 
-            if (fInput) fInput.disabled = blocked;
-            if (camInput) camInput.disabled = blocked;
-            if (galInput) galInput.disabled = blocked;
+            // NOTE: Never set .disabled = true on file inputs (fileInput, cameraInput, galleryInput)
+            // as doing so causes mobile OS (Android/iOS) to destroy active content:// file stream handles,
+            // triggering net::ERR_FAILED on subsequent form submit.
+            // Interaction is safely controlled via UI container pointer-events and buttons instead.
 
             if (dz) {
                 if (blocked) {
@@ -2159,6 +2158,21 @@
                     scanBtn.style.filter = '';
                     scanBtn.style.cursor = '';
                     scanBtn.title = '';
+                }
+            }
+
+            if (chooseGalBtn) {
+                chooseGalBtn.disabled = blocked;
+                if (blocked) {
+                    chooseGalBtn.style.pointerEvents = 'none';
+                    chooseGalBtn.style.opacity = '0.45';
+                    chooseGalBtn.style.cursor = 'not-allowed';
+                    chooseGalBtn.title = 'Gallery blocked: This paper is already uploaded or pending review.';
+                } else {
+                    chooseGalBtn.style.pointerEvents = '';
+                    chooseGalBtn.style.opacity = '';
+                    chooseGalBtn.style.cursor = '';
+                    chooseGalBtn.title = '';
                 }
             }
 
@@ -2311,7 +2325,11 @@
 
             window.isNavigatingAway = true;
             submitBtn.classList.add('loading');
-            submitBtn.disabled = true;
+            submitBtn.style.pointerEvents = 'none';
+            // Defer disabling the button so mobile Chrome can complete the touch gesture dispatch
+            setTimeout(() => {
+                submitBtn.disabled = true;
+            }, 50);
 
             const overlay = document.getElementById('uploadLoadingOverlay');
             const statusEl = document.getElementById('uploadLoadingStatus');
